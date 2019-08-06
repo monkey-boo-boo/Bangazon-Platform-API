@@ -135,12 +135,12 @@ namespace TestBangazonAPI
                 /*
                     ACT
                 */
-                var deleteResponse = await client.DeleteAsync($"/api/ptoducttype/{NewBrush.Id}");
+                var deleteResponse = await client.DeleteAsync($"/api/producttype/{NewBrush.Id}");
 
                 /*
                     ASSERT
                 */
-                Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
             }
         }
     }
