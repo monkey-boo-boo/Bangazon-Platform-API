@@ -39,7 +39,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT ProductType.Id, ProductType.[Name]
+                    cmd.CommandText = @"SELECT Id, [Name]
                                         FROM ProductType";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -49,7 +49,7 @@ namespace BangazonAPI.Controllers
                         ProductType productType = new ProductType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("[Name]")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
                         };
 
                         productTypes.Add(productType);
@@ -63,7 +63,7 @@ namespace BangazonAPI.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetProductType")]
         public async Task<IActionResult> Get(int id)
         {
             using (SqlConnection conn = Connection)
@@ -83,7 +83,7 @@ namespace BangazonAPI.Controllers
                         productType = new ProductType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("[Name]")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
                             // You might have more columns
                         };
                     }
@@ -106,14 +106,12 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
-                        INSERT INTO ProductType ()
-                        OUTPUT INSERTED.Id
-                        VALUES ()
-                    ";
-                    cmd.Parameters.Add(new SqlParameter("@[Name]", productType.Name));
-
-                    productType.Id = (int) await cmd.ExecuteScalarAsync();
-
+                       INSERT INTO ProductType ([Name])
+                       OUTPUT INSERTED.Id
+                       VALUES (@Name)
+                   ";
+                    cmd.Parameters.Add(new SqlParameter("@Name", productType.Name));
+                    productType.Id = (int)await cmd.ExecuteScalarAsync();
                     return CreatedAtRoute("GetProductType", new { id = productType.Id }, productType);
                 }
             }
@@ -136,7 +134,7 @@ namespace BangazonAPI.Controllers
                             WHERE Id = @id
                         ";
                         cmd.Parameters.Add(new SqlParameter("@id", productType.Id));
-                        cmd.Parameters.Add(new SqlParameter("@[Name]", productType.Name));
+                        cmd.Parameters.Add(new SqlParameter("@Name", productType.Name));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 

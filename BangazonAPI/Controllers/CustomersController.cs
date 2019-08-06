@@ -77,7 +77,7 @@ namespace BangazonAPI.Controllers
                 {
                     cmd.CommandText = @"
                         SELECT
-                            Id, FirstName, LastName
+                        Id, FirstName, LastName
                         FROM Customer
                         WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -169,10 +169,6 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
-<<<<<<< HEAD
-
-=======
->>>>>>> master
         private bool CustomerExists(int id)
         {
             using (SqlConnection conn = Connection)

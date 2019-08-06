@@ -13,29 +13,49 @@ namespace TestBangazonAPI
     public class TestProductType
     {
         [Fact]
-        public async Task Test_Get_All_ProudctTypes()
+        public async Task Test_Get_All_ProductTypes()
         {
             using (var client = new APIClientProvider().Client)
             {
-                /*
-                    ARRANGE
-                */
-
-
-                /*
-                    ACT
-                */
-                var response = await client.GetAsync("/api/ProductTypes");
-
-
+                var response = await client.GetAsync("/api/producttype");
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var productTypes = JsonConvert.DeserializeObject<List<ProductType>>(responseBody);
-
-                /*
-                    ASSERT
-                */
+                var productType = JsonConvert.DeserializeObject<List<ProductType>>(responseBody);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(productTypes.Count > 0);
+                Assert.True(productType.Count > 0);
+            }
+        }
+
+        [Fact]
+        public async Task Test_Get_Single_ProductType()
+        {
+            using (var client = new APIClientProvider().Client)
+            {
+                var response = await client.GetAsync("/api/producttype/2");
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var customer = JsonConvert.DeserializeObject<ProductType>(responseBody);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.NotNull(customer);
+            }
+        }
+
+        [Fact]
+        public async Task Test_Create_ProductType()
+        {
+            using (var client = new APIClientProvider().Client)
+            {
+                ProductType berries = new ProductType
+                {
+                    Name = "Berries"
+                };
+                var ProductAsJSON = JsonConvert.SerializeObject(berries);
+                var response = await client.PostAsync(
+                    "/api/producttype",
+                    new StringContent(ProductAsJSON, Encoding.UTF8, "application/json")
+                );
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var NewProductType = JsonConvert.DeserializeObject<ProductType>(responseBody);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                Assert.Equal(berries.Name, NewProductType.Name);
             }
         }
 
