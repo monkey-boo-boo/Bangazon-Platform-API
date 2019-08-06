@@ -123,9 +123,10 @@ namespace BangazonAPI.Controllers
                     return CreatedAtRoute("GetPaymentTypes", new { id = paymentType.Id }, paymentType);
                 }
             }
-                        // PUT api/values/5
-            [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] Customer customer)
+        }
+        // PUT api/values/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody] PaymentType paymentType)
         {
             try
             {
@@ -135,13 +136,14 @@ namespace BangazonAPI.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                                UPDATE Customer
-                                SET FirstName = @firstName
-                                -- Set the remaining columns here
-                                WHERE Id = @id
-                            ";
-                        cmd.Parameters.Add(new SqlParameter("@id", customer.Id));
-                        cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
+                            UPDATE PaymentType
+                            SET AcctNumber = @AcctNumber,
+                            [Name] = @Name
+                            WHERE Id = @id
+                        ";
+                        cmd.Parameters.Add(new SqlParameter("@id", paymentType.Id));
+                        cmd.Parameters.Add(new SqlParameter("@AcctNumber", paymentType.AccountNumber));
+                        cmd.Parameters.Add(new SqlParameter("@Name", paymentType.Name));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
@@ -154,38 +156,68 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
+            catch (Exception)
+            {
+                if (!PaymentTypeExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] int id)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM PaymentType WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
 
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!PaymentTypeExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+        private bool PaymentTypeExists(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    // More string interpolation
+                    cmd.CommandText = "SELECT Id FROM PaymentType WHERE Id = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
 
+                    SqlDataReader reader = cmd.ExecuteReader();
 
-            //    catch (Exception)
-            //    {
-            //        if (!CustomerExists(id))
-            //        {
-            //            return NotFound();
-            //        }
-            //        else
-            //        {
-            //            throw;
-            //        }
-            //    }
-            //}
-            //private bool CustomerExists(int id)
-            //{
-            //    using (SqlConnection conn = Connection)
-            //    {
-            //        conn.Open();
-            //        using (SqlCommand cmd = conn.CreateCommand())
-            //        {
-            //            // More string interpolation
-            //            cmd.CommandText = "SELECT Id FROM Customer WHERE Id = @id";
-            //            cmd.Parameters.Add(new SqlParameter("@id", id));
-
-            //            SqlDataReader reader = cmd.ExecuteReader();
-
-            //            return reader.Read();
-            //        }
-            //    }
-            //} 
+                    return reader.Read();
+                }
+            }
         }
     }
 }
