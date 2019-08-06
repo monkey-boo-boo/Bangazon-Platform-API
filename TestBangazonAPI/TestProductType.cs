@@ -63,7 +63,7 @@ namespace TestBangazonAPI
         public async Task Test_Modify_ProductType()
         {
             // New last name to change to and test
-            string newType = "Cleaning";
+            string newType = "Clean";
 
             using (var client = new APIClientProvider().Client)
             {
@@ -72,13 +72,13 @@ namespace TestBangazonAPI
                 */
                 ProductType modifiedProductType = new ProductType
                 {
-                    Name = "Automotive",
+                    Name = newType,
  
                 };
                 var modifiedProudctTypeAsJSON = JsonConvert.SerializeObject(modifiedProductType);
 
                 var response = await client.PutAsync(
-                    "/api/productType/1",
+                    "/api/productType/4",
                     new StringContent(modifiedProudctTypeAsJSON, Encoding.UTF8, "application/json")
                 );
                 string responseBody = await response.Content.ReadAsStringAsync();
@@ -90,14 +90,57 @@ namespace TestBangazonAPI
                     GET section
                     Verify that the PUT operation was successful
                 */
-                var getProductType = await client.GetAsync("/api/productType/1");
-                getProductType.EnsureSuccessStatusCode();
+                var getCleaning = await client.GetAsync("/api/productType/4");
+                getCleaning.EnsureSuccessStatusCode();
 
-                string getProductTypeBody = await getProductType.Content.ReadAsStringAsync();
-                ProductType newProductType = JsonConvert.DeserializeObject<ProductType>(getProductTypeBody);
+                string getCleaningBody = await getCleaning.Content.ReadAsStringAsync();
+                ProductType newCleaning = JsonConvert.DeserializeObject<ProductType>(getCleaningBody);
 
-                Assert.Equal(HttpStatusCode.OK, getProductType.StatusCode);
-                Assert.Equal(newType, newProductType.Name );
+                Assert.Equal(HttpStatusCode.OK, getCleaning.StatusCode);
+                Assert.Equal(newType, newCleaning.Name );
+            }
+        }
+
+        [Fact]
+        public async Task Test_Create_And_Delete_ProductType()
+        {
+            using (var client = new APIClientProvider().Client)
+            {
+                /*
+                    ARRANGE
+                */
+                ProductType Brushes = new ProductType
+                {
+                    Name = "Bush Blue"
+                };
+                var BrushesAsJSON = JsonConvert.SerializeObject(Brushes);
+
+                /*
+                    ACT
+                */
+                var response = await client.PostAsync(
+                    "/api/producttype",
+                    new StringContent(BrushesAsJSON, Encoding.UTF8, "application/json")
+                );
+
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var NewBrush = JsonConvert.DeserializeObject<ProductType>(responseBody);
+
+                /*
+                    ASSERT
+                */
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                Assert.Equal(Brushes.Name, NewBrush.Name);
+                /*
+                    ACT
+                */
+                var deleteResponse = await client.DeleteAsync($"/api/ptoducttype/{NewBrush.Id}");
+
+                /*
+                    ASSERT
+                */
+                Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
             }
         }
     }
