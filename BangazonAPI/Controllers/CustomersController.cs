@@ -64,12 +64,9 @@ namespace BangazonAPI.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetCustomer")]
         public async Task<IActionResult> Get(int id)
         {
-
-            //Add "if Id doesnt exist function" here
-
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
@@ -113,11 +110,12 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
-                        INSERT INTO Customer ()
+                        INSERT INTO Customer (FirstName, LastName)
                         OUTPUT INSERTED.Id
-                        VALUES ()
+                        VALUES (@firstName, @lastName)
                     ";
                     cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
+                    cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
 
                     customer.Id = (int)await cmd.ExecuteScalarAsync();
 
@@ -139,12 +137,13 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE Customer
-                            SET FirstName = @firstName
-                            -- Set the remaining columns here
+                            SET FirstName = @firstName,
+                            LastName = @lastName
                             WHERE Id = @id
                         ";
                         cmd.Parameters.Add(new SqlParameter("@id", customer.Id));
                         cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
