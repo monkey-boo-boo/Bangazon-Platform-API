@@ -75,7 +75,6 @@ namespace TestBangazonAPI
                 };
                 var BerryAsJSON = JsonConvert.SerializeObject(Berry);
 
-
                 var response = await client.PostAsync(
                     "/api/customers",
                     new StringContent(BerryAsJSON, Encoding.UTF8, "application/json")
