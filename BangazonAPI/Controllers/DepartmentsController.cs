@@ -36,10 +36,12 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
 
-                    cmd.CommandText = @"
-                    SELECT 
-                    Id, [Name], Budget 
-                    FROM Department";
+                    cmd.CommandText = @"SELECT  
+                    d.Id, d.Name , d.Budget,
+                    e.Id as EmployeeId, e.FirstName, e.LastName, e.IsSuperVisor
+                    FROM Department d
+                    JOIN Employee e ON d.Id = e.DepartmentId";
+
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<Department> departments = new List<Department>();
@@ -63,39 +65,74 @@ namespace BangazonAPI.Controllers
             }
         }
         [HttpGet("{id}", Name = "GetDepartment")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(int id, string include)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
+                    if (!DepartmentExists(id))
+                    {
+                        return new StatusCodeResult(StatusCodes.Status404NotFound);
+                    }
+
+                    if (include == "employees")
+                    {
+                        cmd.CommandText = @"SELECT  
+                    d.Id, d.Name , d.Budget,
+                    e.Id as EmployeeId, e.FirstName, e.LastName, e.IsSuperVisor
+                    FROM Department d
+                    JOIN Employee e ON d.Id = e.DepartmentId";
+                    }
+                    else
+                    {
+                        cmd.CommandText = @"
                         SELECT
                         Id, [Name], Budget
                         FROM Department
                         WHERE Id = @Id";
+                    }
+
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     Department department = null;
-                    if (reader.Read())
+                    while (reader.Read())
                     {
-                        department = new Department
+                        if (department == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            ExpenseBudget = reader.GetInt32(reader.GetOrdinal("Budget")),
-                            // You might have more columns
-                        };
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                ExpenseBudget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                                // You might have more columns
+                            };
+                        }
+                        if (include == "employees")
+                        {
+                            if (!reader.IsDBNull(reader.GetOrdinal("EmployeeId")))
+                            {
+                                department.Employees.Add(
+                                    new Employee
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                        IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("IsSuperVisor"))
+                                    }
+                                );
+                            }
+                        }
                     }
-
                     reader.Close();
 
                     return Ok(department);
                 }
             }
         }
+        
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Department department)
         {

@@ -13,7 +13,7 @@ namespace TestBangazonAPI
     public class TestCustomers
     {
         [Fact]
-        public async Task Test_Get_All_Department()
+        public async Task Test_Get_All_Customers()
         {
             using (var client = new APIClientProvider().Client)
             {
@@ -24,17 +24,17 @@ namespace TestBangazonAPI
                 /*
                     ACT
                 */
-                var response = await client.GetAsync("/api/departments");
+                var response = await client.GetAsync("/api/customers");
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var departments = JsonConvert.DeserializeObject<List<Department>>(responseBody);
+                var customers = JsonConvert.DeserializeObject<List<Customer>>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(departments.Count > 0);
+                Assert.True(customers.Count > 0);
             }
         }
         [Fact]
