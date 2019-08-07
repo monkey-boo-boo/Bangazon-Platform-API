@@ -7,7 +7,6 @@ using BangazonAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-
 namespace BangazonAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -36,6 +35,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+
                     cmd.CommandText = @"
                     SELECT 
                     Id, [Name], Budget 
@@ -74,7 +74,7 @@ namespace BangazonAPI.Controllers
                         SELECT
                         Id, [Name], Budget
                         FROM Department
-                        WHERE Id = @id";
+                        WHERE Id = @Id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -106,16 +106,77 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
-                        INSERT INTO Department ([Name], ExpenseBudget)
+                        INSERT INTO Department ([Name], Budget)
                         OUTPUT INSERTED.Id
                         VALUES (@Name, @ExpenseBudget)
                     ";
                     cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
-                    cmd.Parameters.Add(new SqlParameter("@Budget", department.ExpenseBudget));
+                    cmd.Parameters.Add(new SqlParameter("@ExpenseBudget", department.ExpenseBudget));
 
                     department.Id = (int)await cmd.ExecuteScalarAsync();
 
                     return CreatedAtRoute("GetDepartment", new { id = department.Id }, department);
+                }
+            }
+        }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody] Department department)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                            UPDATE Department
+                            SET [Name] = @Name,
+                            Budget = @Budget
+                            WHERE Id = @id
+                        ";
+                        cmd.Parameters.Add(new SqlParameter("@id", department.Id));
+                        cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
+                        cmd.Parameters.Add(new SqlParameter("@Budget", department.ExpenseBudget));
+
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!DepartmentExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+        private bool DepartmentExists(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    // More string interpolation
+                    cmd.CommandText = "SELECT Id FROM Department WHERE Id = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    return reader.Read();
                 }
             }
         }

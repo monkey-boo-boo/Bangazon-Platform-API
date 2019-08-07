@@ -14,5 +14,7 @@ namespace BangazonAPI.Models
         [Required]
         public int ExpenseBudget { get; set; }
 
+        public List<Employee> Employees { get; set; }
+
     }
 }

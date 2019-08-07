@@ -83,52 +83,52 @@ namespace TestBangazonAPI
                 );
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var NewDepartment = JsonConvert.DeserializeObject<Department>(responseBody);
+                Department NewDepartment = JsonConvert.DeserializeObject<Department>(responseBody);
 
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
                 Assert.Equal(department.Name, NewDepartment.Name);
                 Assert.Equal(department.ExpenseBudget, NewDepartment.ExpenseBudget);
             }
         }
-        //[Fact]
-        //public async Task Test_Modify_Customer()
-        //{
-        //    // New last name to change to and test
-        //    string NewFirstName = "Jimmy";
+        [Fact]
+        public async Task Test_Modify_Department()
+        {
+            // New last name to change to and test
+            string NewName = "PutTest";
 
-        //    using (var client = new APIClientProvider().Client)
-        //    {
-        //        /*
-        //            PUT section
-        //         */
-        //        Customer ModifiedCustomer = new Customer
-        //        {
-        //            Id = 1,
-        //            FirstName = NewFirstName,
-        //            LastName = "Buffet"
-        //        };
-        //        var ModifiedButterAsJSON = JsonConvert.SerializeObject(ModifiedCustomer);
+            using (var client = new APIClientProvider().Client)
+            {
+                /*
+                    PUT section
+                 */
+                Department ModifiedDepartment = new Department
+                {
+                    Id = 1,
+                    Name = NewName,
+                    ExpenseBudget = 999999
+                };
+                var ModifiedDepartmentAsJSON = JsonConvert.SerializeObject(ModifiedDepartment);
 
-        //        var response = await client.PutAsync(
-        //            "/api/customers/1",
-        //            new StringContent(ModifiedButterAsJSON, Encoding.UTF8, "application/json")
-        //        );
-        //        string responseBody = await response.Content.ReadAsStringAsync();
+                var response = await client.PutAsync(
+                    "/api/departments/1",
+                    new StringContent(ModifiedDepartmentAsJSON, Encoding.UTF8, "application/json")
+                );
+                string responseBody = await response.Content.ReadAsStringAsync();
 
-        //        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        //        /*
-        //            GET section
-        //         */
-        //        var GetBuffet = await client.GetAsync("/api/customers/1");
-        //        GetBuffet.EnsureSuccessStatusCode();
+                /*
+                    GET section
+                 */
+                var GetDepartment = await client.GetAsync("/api/departments/1");
+                GetDepartment.EnsureSuccessStatusCode();
 
-        //        string GetBuffetBody = await GetBuffet.Content.ReadAsStringAsync();
-        //        Customer NewBuffet = JsonConvert.DeserializeObject<Customer>(GetBuffetBody);
+                string GetDepartmentBody = await GetDepartment.Content.ReadAsStringAsync();
+                Department NewDepartment = JsonConvert.DeserializeObject<Department>(GetDepartmentBody);
 
-        //        Assert.Equal(HttpStatusCode.OK, GetBuffet.StatusCode);
-        //        Assert.Equal(NewFirstName, NewBuffet.FirstName);
-        //    }
-        //}
+                Assert.Equal(HttpStatusCode.OK, GetDepartment.StatusCode);
+                Assert.Equal(NewName, NewDepartment.Name);
+            }
+        }
     }
 }
