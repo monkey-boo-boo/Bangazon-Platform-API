@@ -43,7 +43,7 @@ namespace TestBangazonAPI
 
             using (var client = new APIClientProvider().Client)
             {
-                var response = await client.GetAsync("/api/orders/2");
+                var response = await client.GetAsync("/api/orders/1");
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
@@ -92,41 +92,43 @@ namespace TestBangazonAPI
         [Fact]
         public async Task Test_Modify_Order()
         {
-            // New last name to change to and test
-            int NewCustomerId = 1;
+            int newCustomerId = 5;
 
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     PUT section
                  */
-                Order ModifiedOrder = new Order
+
+                Order order = new Order
                 {
                     Id = 2,
-                    CustomerId = NewCustomerId,
+                    CustomerId = newCustomerId,
                     PaymentTypeId = 1
                 };
-                var ModifiedOrderAsJSON = JsonConvert.SerializeObject(ModifiedOrder);
+                var OrderAsJSON = JsonConvert.SerializeObject(order);
 
                 var response = await client.PutAsync(
-                    "/api/orders/1",
-                    new StringContent(ModifiedOrderAsJSON, Encoding.UTF8, "application/json")
+                    "/api/orders/2",
+                    new StringContent(OrderAsJSON, Encoding.UTF8, "application/json")
                 );
+
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
                 /*
                     GET section
-                 */
-                var GetOrder = await client.GetAsync("/api/orders/1");
+                */
+
+                var GetOrder = await client.GetAsync("/api/orders/2");
                 GetOrder.EnsureSuccessStatusCode();
 
                 string GetOrderBody = await GetOrder.Content.ReadAsStringAsync();
-                Order NewOrder = JsonConvert.DeserializeObject<Order>(GetOrderBody);
+                Order newOrder = JsonConvert.DeserializeObject<Order>(GetOrderBody);
 
                 Assert.Equal(HttpStatusCode.OK, GetOrder.StatusCode);
-                Assert.Equal(NewCustomerId, NewOrder.CustomerId);
+                Assert.Equal(newCustomerId, newOrder.CustomerId);
             }
         }
     }
