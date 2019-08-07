@@ -73,7 +73,7 @@ namespace TestBangazonAPI
         }
 
         [Fact]
-        public async Task Test_Create_Product()
+        public async Task Test_Create_And_Delete_Product()
         {
             using (var client = new APIClientProvider().Client)
             {
