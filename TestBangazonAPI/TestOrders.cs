@@ -131,5 +131,49 @@ namespace TestBangazonAPI
                 Assert.Equal(newCustomerId, newOrder.CustomerId);
             }
         }
+        [Fact]
+        public async Task Test_Create_And_Delete_Order()
+        {
+            using (var client = new APIClientProvider().Client)
+            {
+                /*
+                    ARRANGE
+                */
+                Order newOrder = new Order
+                {
+                    CustomerId = 1,
+                    PaymentTypeId = 1
+                };
+                var newOrderAsJSON = JsonConvert.SerializeObject(newOrder);
+
+                /*
+                    ACT
+                */
+                var response = await client.PostAsync(
+                    "/api/orders",
+                    new StringContent(newOrderAsJSON, Encoding.UTF8, "application/json")
+                );
+
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var NewOrderReturned = JsonConvert.DeserializeObject<Order>(responseBody);
+
+                /*
+                    ASSERT
+                */
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                Assert.Equal(newOrder.CustomerId, NewOrderReturned.CustomerId);
+                Assert.Equal(newOrder.PaymentTypeId, NewOrderReturned.PaymentTypeId);
+                /*
+                    ACT
+                */
+                var deleteResponse = await client.DeleteAsync($"/api/orders/{NewOrderReturned.Id}");
+
+                /*
+                    ASSERT
+                */
+                Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+            }
+        }
     }
 }

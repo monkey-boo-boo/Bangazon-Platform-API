@@ -169,6 +169,42 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM [Order] WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                        if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+
+                        throw new Exception("No rows affected");
+                    }
+                }
+
+            }
+            catch (Exception)
+            {
+                if (!OrderExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
         private bool OrderExists(int id)
         {
             using (SqlConnection conn = Connection)
