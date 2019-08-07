@@ -102,7 +102,7 @@ namespace TestBangazonAPI
                  */
                 Order ModifiedOrder = new Order
                 {
-                    Id = 1,
+                    Id = 2,
                     CustomerId = NewCustomerId,
                     PaymentTypeId = 1
                 };
