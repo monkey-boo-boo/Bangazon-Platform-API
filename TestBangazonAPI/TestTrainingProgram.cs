@@ -41,13 +41,18 @@ namespace TestBangazonAPI
         [Fact]
         public async Task Test_Create_TrainingProgram()
         {
+            DateTime startDate = new DateTime(2020, 10, 10);
+            DateTime endDate = new DateTime(2020, 11, 10);
             using (var client = new APIClientProvider().Client)
             {
-                TrainingProgram berries = new TrainingProgram
+                TrainingProgram trainingProgram = new TrainingProgram
                 {
-                    Name = "Berries"
+                    Name = "Training Day",
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    MaxAttendees = 60
                 };
-                var ProductAsJSON = JsonConvert.SerializeObject(berries);
+                var ProductAsJSON = JsonConvert.SerializeObject(trainingProgram);
                 var response = await client.PostAsync(
                     "/api/trainingprogram",
                     new StringContent(ProductAsJSON, Encoding.UTF8, "application/json")
@@ -55,7 +60,10 @@ namespace TestBangazonAPI
                 string responseBody = await response.Content.ReadAsStringAsync();
                 var NewTrainingProgram = JsonConvert.DeserializeObject<TrainingProgram>(responseBody);
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-                Assert.Equal(berries.Name, NewTrainingProgram.Name);
+                Assert.Equal(trainingProgram.Name, NewTrainingProgram.Name);
+                Assert.Equal(trainingProgram.StartDate, NewTrainingProgram.StartDate);
+                Assert.Equal(trainingProgram.EndDate, NewTrainingProgram.EndDate);
+                Assert.Equal(trainingProgram.MaxAttendees, NewTrainingProgram.MaxAttendees);
             }
         }
 
@@ -104,38 +112,46 @@ namespace TestBangazonAPI
         [Fact]
         public async Task Test_Create_And_Delete_TrainingProgram()
         {
+            DateTime startDate = new DateTime(2020, 10, 10);
+            DateTime endDate = new DateTime(2020, 11, 10);
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     ARRANGE
                 */
-                TrainingProgram Brushes = new TrainingProgram
+                TrainingProgram trainingProgram = new TrainingProgram
                 {
-                    Name = "Bush Blue"
+                    Name = "Sensitivity Training",
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    MaxAttendees = 60
                 };
-                var BrushesAsJSON = JsonConvert.SerializeObject(Brushes);
+                var TrainingAsJSON = JsonConvert.SerializeObject(trainingProgram);
 
                 /*
                     ACT
                 */
                 var response = await client.PostAsync(
                     "/api/trainingprogram",
-                    new StringContent(BrushesAsJSON, Encoding.UTF8, "application/json")
+                    new StringContent(TrainingAsJSON, Encoding.UTF8, "application/json")
                 );
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var NewBrush = JsonConvert.DeserializeObject<TrainingProgram>(responseBody);
+                var NewTrainingProgram = JsonConvert.DeserializeObject<TrainingProgram>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-                Assert.Equal(Brushes.Name, NewBrush.Name);
+                Assert.Equal(trainingProgram.Name, NewTrainingProgram.Name);
+                Assert.Equal(trainingProgram.StartDate, NewTrainingProgram.StartDate);
+                Assert.Equal(trainingProgram.EndDate, NewTrainingProgram.EndDate);
+                Assert.Equal(trainingProgram.MaxAttendees, NewTrainingProgram.MaxAttendees);
                 /*
                     ACT
                 */
-                var deleteResponse = await client.DeleteAsync($"/api/trainingprogram/{NewBrush.Id}");
+                var deleteResponse = await client.DeleteAsync($"/api/trainingprogram/{NewTrainingProgram.Id}");
 
                 /*
                     ASSERT

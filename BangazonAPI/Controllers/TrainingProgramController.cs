@@ -39,7 +39,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Id, StartDate, EndDate, MaxAttendees, [Name], 
+                    cmd.CommandText = @"SELECT [Id], [StartDate], [EndDate], [MaxAttendees], [Name] 
                                         FROM TrainingProgram";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -74,7 +74,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Id, StartDate, EndDate, MaxAttendees, [Name],
+                    cmd.CommandText = @"SELECT [Id], [StartDate], [EndDate], [MaxAttendees], [Name]
                                         FROM TrainingProgram
                                         WHERE TrainingProgram.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
@@ -87,7 +87,9 @@ namespace BangazonAPI.Controllers
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
-                            // You might have more columns
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees")),
                         };
                     }
 
@@ -109,10 +111,13 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
-                       INSERT INTO TrainingProgram ([Name])
+                       INSERT INTO TrainingProgram ( [StartDate], [EndDate], [MaxAttendees], [Name])
                        OUTPUT INSERTED.Id
-                       VALUES (@Name)
+                       VALUES (@StartDate, @EndDate, @MaxAttendees, @Name)
                    ";
+                    cmd.Parameters.Add(new SqlParameter("@StartDate", trainingProgram.StartDate));
+                    cmd.Parameters.Add(new SqlParameter("@EndDate", trainingProgram.EndDate));
+                    cmd.Parameters.Add(new SqlParameter("@MaxAttendees", trainingProgram.MaxAttendees));
                     cmd.Parameters.Add(new SqlParameter("@Name", trainingProgram.Name));
                     trainingProgram.Id = (int)await cmd.ExecuteScalarAsync();
                     return CreatedAtRoute("GetTrainingProgram", new { id = trainingProgram.Id }, trainingProgram);
@@ -133,10 +138,14 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE TrainingProgram
-                            SET Name  = @Name
+                            SET [Name]  = @Name
+                            StartDate = @StartDate
+                            EndDate = @EndDate
                             WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        cmd.Parameters.Add(new SqlParameter("@StartDate", trainingProgram.StartDate));
+                        cmd.Parameters.Add(new SqlParameter("@EndDate", trainingProgram.EndDate));
+                        cmd.Parameters.Add(new SqlParameter("@MaxAttendees", trainingProgram.MaxAttendees));
                         cmd.Parameters.Add(new SqlParameter("@Name", trainingProgram.Name));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
