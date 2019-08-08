@@ -21,9 +21,7 @@ namespace BangazonAPI.Models
         [Required]
         public bool IsSuperVisor { get; set; }
 
-        //TO DO - add computer instance
-        
-
+        public Computer Computer { get; set; }
     }
 }
 
