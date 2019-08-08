@@ -65,7 +65,7 @@ namespace BangazonAPI.Controllers
             }
         }
         [HttpGet("{id}", Name = "GetDepartment")]
-        public async Task<IActionResult> Get(int id, string include)
+        public async Task<IActionResult> Get([FromRoute] int id, string include)
         {
             using (SqlConnection conn = Connection)
             {
