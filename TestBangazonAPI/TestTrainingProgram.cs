@@ -143,6 +143,7 @@ namespace TestBangazonAPI
                 /*
                     ASSERT
                 */
+
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
                 Assert.Equal(trainingProgram.Name, NewTrainingProgram.Name);
                 Assert.Equal(trainingProgram.StartDate, NewTrainingProgram.StartDate);
@@ -151,6 +152,14 @@ namespace TestBangazonAPI
                 /*
                     ACT
                 */
+
+                var response1 = await client.GetAsync("/api/trainingprogram/2");
+                string responseBody1 = await response.Content.ReadAsStringAsync();
+                var trainProgram = JsonConvert.DeserializeObject<TrainingProgram>(responseBody1);
+                Assert.Equal(HttpStatusCode.OK, response1.StatusCode);
+                Assert.NotNull(trainProgram);
+
+
                 var deleteResponse = await client.DeleteAsync($"/api/trainingprogram/{NewTrainingProgram.Id}");
 
                 /*

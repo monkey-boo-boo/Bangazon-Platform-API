@@ -175,39 +175,67 @@ namespace BangazonAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
+            using (SqlConnection conn = Connection)
             {
-                using (SqlConnection conn = Connection)
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
+                    cmd.CommandText = @"SELECT [Id], [StartDate], [EndDate], [MaxAttendees], [Name]
+                                        FROM TrainingProgram
+                                        WHERE TrainingProgram.Id = @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+                    TrainingProgram trainingProgram = null;
+                    if (reader.Read())
                     {
-                        cmd.CommandText = @"DELETE FROM TrainingProgram WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@id", id));
-
-                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
-                        if (rowsAffected > 0)
+                        trainingProgram = new TrainingProgram
                         {
-                            return Ok();
-                        }
-
-                        throw new Exception("No rows affected");
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees")),
+                        };
                     }
-                }
-                
-            }
-            catch (Exception)
-            {
-                if (!TrainingProgramExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
+                    if (trainingProgram.StartDate > DateTime.Now)
+                    {
+                        try
+                        {
+                            {
+                                conn.Open();
+                                {
+                                    cmd.CommandText = @"DELETE FROM TrainingProgram WHERE Id = @id";
+                                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                                    if (rowsAffected > 0)
+                                    {
+                                        return Ok();
+                                    }
+
+                                    throw new Exception("No rows affected");
+                                }
+                            }
+
+                        }
+                        catch (Exception)
+                        {
+                            if (!TrainingProgramExists(id))
+                            {
+                                return NotFound();
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                    }
+                    else { return Forbid(); }
                 }
             }
         }
+        
 
         private bool TrainingProgramExists(int id)
         {
