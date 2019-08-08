@@ -22,5 +22,7 @@ namespace BangazonAPI.Models
 
         [Required]
         public string Name { get; set; }
+
+        public List<Employee> EmployeesInProgram { get; set; }
     }
 }

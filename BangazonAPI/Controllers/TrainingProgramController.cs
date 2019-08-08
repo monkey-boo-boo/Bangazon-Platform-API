@@ -32,30 +32,66 @@ namespace BangazonAPI.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string completed)
         {
+            string SqlCommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
+                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
+                                        JOIN Employee e ON e.Id = et.EmployeeId;";
+            if (completed == "false")
+            {
+                SqlCommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
+                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
+                                        JOIN Employee e ON e.Id = et.EmployeeId
+                                        WHERE tp.EndDate > CURRENT_TIMESTAMP;";
+            }
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT [Id], [StartDate], [EndDate], [MaxAttendees], [Name] 
-                                        FROM TrainingProgram";
+                    cmd.CommandText = SqlCommandText;
+
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<TrainingProgram> trainingPrograms = new List<TrainingProgram>();
                     while (reader.Read())
                     {
-                        TrainingProgram trainingProgram = new TrainingProgram
+
+                        int Id = reader.GetInt32(reader.GetOrdinal("Id"));
+                        string Name = reader.GetString(reader.GetOrdinal("Name"));
+                        DateTime StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate"));
+                        DateTime EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate"));
+                        int MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"));
+                        string FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                        string LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                        // You might have more columns
+
+                        Employee employee = new Employee()
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees")),
+                            FirstName = FirstName,
+                            LastName = LastName
                         };
 
-                        trainingPrograms.Add(trainingProgram);
+                        if (!trainingPrograms.Any(tp => tp.Id == Id))
+                        {
+                            TrainingProgram trainingProgram = new TrainingProgram()
+                            {
+                                Id = Id,
+                                Name = Name,
+                                StartDate = StartDate,
+                                EndDate = EndDate,
+                                MaxAttendees = MaxAttendees,
+                                EmployeesInProgram = new List<Employee>()
+                            };
+
+                            trainingProgram.EmployeesInProgram.Add(employee);
+                            trainingPrograms.Add(trainingProgram);
+                        }
+                        else
+                        {
+                            var findProgram = trainingPrograms.Find(tp => tp.Id == Id);
+                            findProgram.EmployeesInProgram.Add(employee);
+                        }
                     }
 
                     reader.Close();
@@ -64,6 +100,7 @@ namespace BangazonAPI.Controllers
                 }
             }
         }
+
 
         // GET api/values/5
         [HttpGet("{id}", Name = "GetTrainingProgram")]
@@ -172,70 +209,86 @@ namespace BangazonAPI.Controllers
             }
         }
 
+        //DELETE api/values/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromRoute]int id)
         {
-            using (SqlConnection conn = Connection)
+
+
+            try
             {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
+                using (SqlConnection conn = Connection)
                 {
-                    cmd.CommandText = @"SELECT [Id], [StartDate], [EndDate], [MaxAttendees], [Name]
-                                        FROM TrainingProgram
-                                        WHERE TrainingProgram.Id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
-                    SqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"SELECT Id, [Name], StartDate, EndDate, MaxAttendees 
+                                        FROM TrainingProgram 
+                                        WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-                    TrainingProgram trainingProgram = null;
-                    if (reader.Read())
-                    {
-                        trainingProgram = new TrainingProgram
+                        TrainingProgram trainingProgram = null;
+                        if (reader.Read())
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees")),
-                        };
-                    }
-                    if (trainingProgram.StartDate > DateTime.Now)
-                    {
-                        try
-                        {
+                            trainingProgram = new TrainingProgram
                             {
-                                conn.Open();
-                                {
-                                    cmd.CommandText = @"DELETE FROM TrainingProgram WHERE Id = @id";
-                                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("NAme")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                                // You might have more columns
+                            };
+                        }
 
-                                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                        reader.Close();
+
+                        if (trainingProgram.StartDate > DateTime.Now)
+                        {
+                            using (SqlConnection conn2 = Connection)
+                            {
+                                conn2.Open();
+                                using (SqlCommand cmd2 = conn2.CreateCommand())
+                                {
+                                    cmd2.CommandText = @"DELETE FROM EmployeeTraining 
+                                                         WHERE TrainingProgramId = @id
+                                                         DELETE FROM TrainingProgram
+                                                         WHERE Id = @id
+                                                          ";
+                                    cmd2.Parameters.Add(new SqlParameter("@id", id));
+
+                                    int rowsAffected = cmd2.ExecuteNonQuery();
                                     if (rowsAffected > 0)
                                     {
-                                        return Ok();
+                                        return new StatusCodeResult(StatusCodes.Status204NoContent);
                                     }
-
                                     throw new Exception("No rows affected");
                                 }
                             }
 
                         }
-                        catch (Exception)
+                        else
                         {
-                            if (!TrainingProgramExists(id))
-                            {
-                                return NotFound();
-                            }
-                            else
-                            {
-                                throw;
-                            }
+                            return StatusCode(403);
                         }
                     }
-                    else { return Forbid(); }
                 }
             }
+            catch (Exception)
+            {
+                if (!TrainingProgramExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+
+            }
         }
-        
+
 
         private bool TrainingProgramExists(int id)
         {
