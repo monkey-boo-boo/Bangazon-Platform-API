@@ -65,36 +65,71 @@ namespace BangazonAPI.Controllers
 
         // GET api/values/5
         [HttpGet("{id}", Name = "GetCustomer")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get([FromRoute] int id, string include)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
-                        SELECT
-                        Id, FirstName, LastName
-                        FROM Customer
-                        WHERE Id = @id";
+                    //If "products" is specified as a query string argument, return info about the products they're SELLING (i.e., from products, not orders)
+                    if (include == "products")
+                    {
+                        cmd.CommandText = @"SELECT c.Id, c.FirstName, c.LastName, p.Title, p.ProductTypeId, p.Description, p.Quantity 
+                                            FROM Customer c
+                                            JOIN Product p on c.Id = p.CustomerId";
+                    }
+                    else
+                    {
+                        cmd.CommandText = @"
+                                             SELECT
+                                             Id, FirstName, LastName
+                                             FROM Customer
+                                             WHERE Id = @id";
+                    }
+
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
+
                     Customer customer = null;
-                    if (reader.Read())
+
+                    while (reader.Read())
                     {
-                        customer = new Customer
+                        if (customer == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            // You might have more columns
-                        };
+
+                            customer = new Customer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                // You might have more columns
+                            };
+                        }
+                        if (include == "products")
+                        {
+                            if (!reader.IsDBNull(reader.GetOrdinal("ProductId")))
+                            {
+                                customer.Products.Add(
+                                    new Product
+                                    {
+                                        Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                        ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                                        Price = reader.GetInt32(reader.GetOrdinal("Price")),
+                                        Title = reader.GetString(reader.GetOrdinal("Title")),
+                                        Description = reader.GetString(reader.GetOrdinal("Description")),
+                                        Quantity = reader.GetInt32(reader.GetOrdinal("Quantity"))
+
+                                    }
+                                );
+                            }
+                        }
                     }
+                        reader.Close();
 
-                    reader.Close();
-
-                    return Ok(customer);
+                        return Ok(customer);
+                    
                 }
             }
         }
