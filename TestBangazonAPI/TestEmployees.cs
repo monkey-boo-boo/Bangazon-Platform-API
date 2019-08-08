@@ -25,7 +25,7 @@ namespace TestBangazonAPI
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var employees = JsonConvert.DeserializeObject<List<Customer>>(responseBody);
+                var employees = JsonConvert.DeserializeObject<List<Employee>>(responseBody);
 
                 /*
                     ASSERT
@@ -45,7 +45,7 @@ namespace TestBangazonAPI
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var employee = JsonConvert.DeserializeObject<Customer>(responseBody);
+                var employee = JsonConvert.DeserializeObject<Employee>(responseBody);
 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.NotNull(employee);

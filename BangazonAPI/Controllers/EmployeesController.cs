@@ -39,10 +39,13 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.DepartmentId, e.IsSuperVisor, d.Name AS DepartmentName
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName, e.IsSuperVisor, e.DepartmentId, 
+                                        d.[Name] AS DepartmentName,
+                                        co.Id AS ComputerId, co.PurchaseDate, co.DecomissionDate, co.Make, co.Manufacturer
                                         FROM Employee e
-                                        JOIN Department d
-                                        ON d.Id = e.DepartmentId";
+                                        LEFT JOIN Department d ON d.Id = e.DepartmentId
+                                        LEFT JOIN ComputerEmployee c ON c.EmployeeId = e.Id
+                                        LEFT Join Computer co ON c.ComputerId = co.Id";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<Employee> employees = new List<Employee>();
@@ -50,13 +53,31 @@ namespace BangazonAPI.Controllers
                     {
                         Employee employee = new Employee
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             DepartmentName = reader.GetString(reader.GetOrdinal("DepartmentName")),
                             IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("IsSuperVisor"))
                         };
+
+                        if (!reader.IsDBNull(reader.GetOrdinal("ComputerId")))
+                        {
+                            Computer computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                                Make = reader.GetString(reader.GetOrdinal("Make")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                            };
+
+                            if (!reader.IsDBNull(reader.GetOrdinal("DecomissionDate")))
+                            {
+                                computer.DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate"));
+                            };
+
+                            employee.Computer = computer;
+                        }
 
                         employees.Add(employee);
                     }
@@ -80,10 +101,13 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.DepartmentId, e.IsSuperVisor, d.Name AS DepartmentName
+                    cmd.CommandText = @"SELECT e.Id AS EmployeeId, e.FirstName, e.LastName, e.IsSuperVisor, e.DepartmentId, 
+                                        d.[Name] AS DepartmentName,
+                                        co.Id AS ComputerId, co.PurchaseDate, co.DecomissionDate, co.Make, co.Manufacturer
                                         FROM Employee e
-                                        JOIN Department d
-                                        ON d.Id = e.DepartmentId
+                                        LEFT JOIN Department d ON d.Id = e.DepartmentId
+                                        LEFT JOIN ComputerEmployee c ON c.EmployeeId = e.Id
+                                        LEFT Join Computer co ON c.ComputerId = co.Id
                                         WHERE e.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
@@ -93,13 +117,31 @@ namespace BangazonAPI.Controllers
                     {
                         employee = new Employee
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             DepartmentName = reader.GetString(reader.GetOrdinal("DepartmentName")),
                             IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("IsSuperVisor"))
                         };
+
+                        if (!reader.IsDBNull(reader.GetOrdinal("ComputerId")))
+                        {
+                            Computer computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                                Make = reader.GetString(reader.GetOrdinal("Make")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                            };
+
+                            if (!reader.IsDBNull(reader.GetOrdinal("DecomissionDate")))
+                            {
+                                computer.DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate"));
+                            };
+
+                            employee.Computer = computer;
+                        }
 
                     }
 
