@@ -106,7 +106,7 @@ namespace BangazonAPI.Controllers
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                                 Name = reader.GetString(reader.GetOrdinal("Name")),
-                                ExpenseBudget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                                ExpenseBudget = reader.GetInt32(reader.GetOrdinal("Budget"))
                                 // You might have more columns
                             };
                         }
